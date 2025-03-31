@@ -28,5 +28,21 @@
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	
+	<!-- 添加网络安全配置 -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
+	
+	<!-- 添加窗口大小配置 -->
+	<key>NSWindow</key>
+	<dict>
+		<key>NSWindowSizeWidth</key>
+		<integer>1024</integer>
+		<key>NSWindowSizeHeight</key>
+		<integer>768</integer>
+	</dict>
 </dict>
 </plist>
