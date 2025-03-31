@@ -6,9 +6,11 @@ import 'package:json_tools/screens/convert_screen.dart';
 import 'package:json_tools/screens/format_screen.dart';
 import 'package:json_tools/screens/home_screen.dart';
 import 'package:json_tools/screens/visualize_screen.dart';
+import 'package:json_tools/screens/settings_screen.dart';
 import 'package:json_tools/theme/app_theme.dart';
 import 'package:json_tools/widgets/sidebar.dart';
-
+import 'package:provider/provider.dart';
+import 'providers/theme_provider.dart';
 import 'models/menu_item.dart';
 
 void main() async {
@@ -18,21 +20,40 @@ void main() async {
   if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
     await DesktopWindow.setWindowSize(const Size(1024, 768));
     await DesktopWindow.setMinWindowSize(const Size(800, 600));
-    // 注意：desktop_window 没有直接设置窗口标题的方法
-    // 窗口标题通常通过 MaterialApp 的 title 属性设置
   }
 
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => ThemeProvider(),
+      child: const MyApp(),
+    ),
+  );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({Key? key}) : super(key: key);
 
   @override
+  _MyAppState createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  @override
+  void initState() {
+    super.initState();
+    // 初始化主题
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<ThemeProvider>(context, listen: false).initialize();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    
     return MaterialApp(
       title: 'JSON工具箱',
-      theme: AppTheme.lightTheme,
+      theme: themeProvider.themeData, // 使用主题提供者的主题数据
       debugShowCheckedModeBanner: false,
       home: const MainScreen(),
     );
@@ -95,38 +116,9 @@ class _MainScreenState extends State<MainScreen> {
       case '/visualize':
         return const VisualizeScreen();
       case '/settings':
-        return _buildSettingsScreen();
+        return const SettingsScreen();
       default:
         return const HomeScreen();
     }
-  }
-
-  Widget _buildSettingsScreen() {
-    // 简单的设置页面
-    return Column(
-      children: [
-        const Padding(
-          padding: EdgeInsets.all(16.0),
-          child: Text(
-            '设置',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-        Expanded(
-          child: Center(
-            child: Text(
-              '设置页面正在开发中...',
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 16,
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
   }
 }

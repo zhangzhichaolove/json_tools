@@ -12,8 +12,6 @@ class HomeScreen extends StatelessWidget {
         TopBar(
           title: '欢迎使用',
           onMenuPressed: () {},
-          showHelpIcon: false,  // 不显示帮助图标
-          showNotificationIcon: false,  // 不显示通知图标
         ),
         Expanded(
           child: SingleChildScrollView(

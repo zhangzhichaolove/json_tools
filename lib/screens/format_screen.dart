@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import '../providers/theme_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/top_bar.dart';
 import '../widgets/json_editor.dart';
@@ -62,8 +64,6 @@ class _FormatScreenState extends State<FormatScreen> {
               children: [
                 _buildToolButton('示例', Icons.search),
                 const SizedBox(width: 8),
-                _buildToolButton('导入文件', Icons.file_download),
-                const SizedBox(width: 8),
                 _buildToolButton('粘贴', Icons.content_paste),
                 const SizedBox(width: 8),
                 _buildToolButton('清空', Icons.delete_outline),
@@ -89,6 +89,8 @@ class _FormatScreenState extends State<FormatScreen> {
   }
 
   Widget _buildActionButtons() {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -101,7 +103,7 @@ class _FormatScreenState extends State<FormatScreen> {
             });
           },
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppTheme.primary,
+            backgroundColor: themeProvider.primaryColor, // 使用主题颜色
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           ),
         ),

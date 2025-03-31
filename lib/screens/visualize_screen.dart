@@ -4,6 +4,8 @@ import 'dart:convert';
 import '../theme/app_theme.dart';
 import '../widgets/top_bar.dart';
 import '../widgets/json_editor.dart';
+import 'package:provider/provider.dart';
+import '../providers/theme_provider.dart';
 
 class VisualizeScreen extends StatefulWidget {
   const VisualizeScreen({Key? key}) : super(key: key);
@@ -20,6 +22,9 @@ class _VisualizeScreenState extends State<VisualizeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDarkMode = themeProvider.isDarkMode;
+    
     return Column(
       children: [
         TopBar(
@@ -31,11 +36,11 @@ class _VisualizeScreenState extends State<VisualizeScreen> {
             children: [
               Expanded(
                 flex: 2,
-                child: _buildInputSection(),
+                child: _buildInputSection(isDarkMode),
               ),
               Expanded(
                 flex: 3,
-                child: _buildVisualizationSection(),
+                child: _buildVisualizationSection(isDarkMode),
               ),
             ],
           ),
@@ -44,12 +49,17 @@ class _VisualizeScreenState extends State<VisualizeScreen> {
     );
   }
 
-  Widget _buildInputSection() {
+  Widget _buildInputSection(bool isDarkMode) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final primaryColor = themeProvider.primaryColor;
+    
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         border: Border(
-          right: BorderSide(color: Colors.grey[200]!),
+          right: BorderSide(
+            color: isDarkMode ? const Color(0xFF333333) : Colors.grey[200]!,
+          ),
         ),
       ),
       child: Column(
@@ -58,19 +68,31 @@ class _VisualizeScreenState extends State<VisualizeScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 '输入 JSON',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF1F2937),
+                  color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
                 ),
               ),
               Row(
                 children: [
-                  _buildToolButton('导入', Icons.file_download, size: 'small'),
+                  _buildToolButton('清空', Icons.delete_outline, size: 'small', isDarkMode: isDarkMode),
                   const SizedBox(width: 4),
-                  _buildToolButton('清空', Icons.delete_outline, size: 'small'),
+                  Center(
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.visibility),
+                      label: const Text('可视化'),
+                      onPressed: () {
+                        _parseJson();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryColor,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ],
@@ -89,19 +111,6 @@ class _VisualizeScreenState extends State<VisualizeScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          Center(
-            child: ElevatedButton.icon(
-              icon: const Icon(Icons.visibility),
-              label: const Text('可视化'),
-              onPressed: () {
-                _parseJson();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primary,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              ),
-            ),
-          ),
         ],
       ),
     );
@@ -133,7 +142,10 @@ class _VisualizeScreenState extends State<VisualizeScreen> {
     }
   }
 
-  Widget _buildVisualizationSection() {
+  Widget _buildVisualizationSection(bool isDarkMode) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final primaryColor = themeProvider.primaryColor;
+    
     return Container(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -142,36 +154,38 @@ class _VisualizeScreenState extends State<VisualizeScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'JSON 树视图',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF1F2937),
+                  color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
                 ),
               ),
               if (isValidJson)
-                _buildToolButton('展开全部', Icons.unfold_more, size: 'small'),
+                _buildToolButton('展开全部', Icons.unfold_more, size: 'small', isDarkMode: isDarkMode),
             ],
           ),
           const SizedBox(height: 8),
           Expanded(
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.grey[50],
+                color: isDarkMode ? const Color(0xFF2C2C2C) : Colors.grey[50],
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.grey[200]!),
+                border: Border.all(
+                  color: isDarkMode ? const Color(0xFF444444) : Colors.grey[200]!,
+                ),
               ),
               padding: const EdgeInsets.all(16),
               child: isValidJson
                   ? SingleChildScrollView(
-                      child: _buildJsonTree(parsedJson, 0),
+                      child: _buildJsonTree(parsedJson, 0, isDarkMode),
                     )
                   : Center(
                       child: Text(
                         errorMessage.isEmpty ? '请输入有效的JSON数据' : errorMessage,
                         style: TextStyle(
-                          color: AppTheme.error,
+                          color: isDarkMode ? Colors.red[300] : AppTheme.error,
                           fontStyle: FontStyle.italic,
                         ),
                       ),
@@ -183,12 +197,12 @@ class _VisualizeScreenState extends State<VisualizeScreen> {
     );
   }
 
-  Widget _buildJsonTree(dynamic json, int depth) {
+  Widget _buildJsonTree(dynamic json, int depth, bool isDarkMode) {
     if (json == null) {
-      return const Text(
+      return Text(
         'null',
         style: TextStyle(
-          color: Colors.purple,
+          color: isDarkMode ? Colors.purple[300] : Colors.purple,
           fontFamily: 'monospace',
         ),
       );
@@ -197,8 +211,8 @@ class _VisualizeScreenState extends State<VisualizeScreen> {
     if (json is String) {
       return Text(
         '"$json"',
-        style: const TextStyle(
-          color: Colors.green,
+        style: TextStyle(
+          color: isDarkMode ? Colors.green[300] : Colors.green,
           fontFamily: 'monospace',
         ),
       );
@@ -207,8 +221,8 @@ class _VisualizeScreenState extends State<VisualizeScreen> {
     if (json is num) {
       return Text(
         json.toString(),
-        style: const TextStyle(
-          color: Colors.blue,
+        style: TextStyle(
+          color: isDarkMode ? Colors.blue[300] : Colors.blue,
           fontFamily: 'monospace',
         ),
       );
@@ -217,25 +231,28 @@ class _VisualizeScreenState extends State<VisualizeScreen> {
     if (json is bool) {
       return Text(
         json.toString(),
-        style: const TextStyle(
-          color: Colors.orange,
+        style: TextStyle(
+          color: isDarkMode ? Colors.orange[300] : Colors.orange,
           fontFamily: 'monospace',
         ),
       );
     }
 
     if (json is List) {
-      return _buildListNode(json, depth);
+      return _buildListNode(json, depth, isDarkMode);
     }
 
     if (json is Map) {
-      return _buildMapNode(json, depth);
+      return _buildMapNode(json, depth, isDarkMode);
     }
 
     return Text(json.toString());
   }
 
-  Widget _buildListNode(List list, int depth) {
+  Widget _buildListNode(List list, int depth, bool isDarkMode) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final primaryColor = themeProvider.primaryColor;
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -244,13 +261,13 @@ class _VisualizeScreenState extends State<VisualizeScreen> {
             Icon(
               Icons.arrow_drop_down,
               size: 20,
-              color: Colors.grey[600],
+              color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
             ),
             Text(
               '数组 [${list.length}]',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: Colors.grey[800],
+                color: isDarkMode ? Colors.grey[300] : Colors.grey[800],
               ),
             ),
           ],
@@ -270,11 +287,11 @@ class _VisualizeScreenState extends State<VisualizeScreen> {
                     Text(
                       '$index: ',
                       style: TextStyle(
-                        color: Colors.grey[600],
+                        color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
                         fontFamily: 'monospace',
                       ),
                     ),
-                    Expanded(child: _buildJsonTree(value, depth + 1)),
+                    Expanded(child: _buildJsonTree(value, depth + 1, isDarkMode)),
                   ],
                 ),
               );
@@ -285,7 +302,7 @@ class _VisualizeScreenState extends State<VisualizeScreen> {
     );
   }
 
-  Widget _buildMapNode(Map map, int depth) {
+  Widget _buildMapNode(Map map, int depth, bool isDarkMode) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -294,13 +311,13 @@ class _VisualizeScreenState extends State<VisualizeScreen> {
             Icon(
               Icons.arrow_drop_down,
               size: 20,
-              color: Colors.grey[600],
+              color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
             ),
             Text(
               '对象 {${map.length}}',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: Colors.grey[800],
+                color: isDarkMode ? Colors.grey[300] : Colors.grey[800],
               ),
             ),
           ],
@@ -318,11 +335,11 @@ class _VisualizeScreenState extends State<VisualizeScreen> {
                     Text(
                       '"${entry.key}": ',
                       style: TextStyle(
-                        color: Colors.red[700],
+                        color: isDarkMode ? Colors.red[300] : Colors.red[700],
                         fontFamily: 'monospace',
                       ),
                     ),
-                    Expanded(child: _buildJsonTree(entry.value, depth + 1)),
+                    Expanded(child: _buildJsonTree(entry.value, depth + 1, isDarkMode)),
                   ],
                 ),
               );
@@ -333,15 +350,15 @@ class _VisualizeScreenState extends State<VisualizeScreen> {
     );
   }
 
-  Widget _buildToolButton(String label, IconData icon, {String size = 'normal', VoidCallback? onPressed}) {
+  Widget _buildToolButton(String label, IconData icon, {String size = 'normal', VoidCallback? onPressed, bool isDarkMode = false}) {
     return OutlinedButton.icon(
       icon: Icon(icon, size: size == 'small' ? 14 : 16),
       label: Text(label),
       onPressed: onPressed ?? () {},
       style: OutlinedButton.styleFrom(
-        foregroundColor: Colors.grey[700],
-        backgroundColor: Colors.grey[100],
-        side: BorderSide(color: Colors.grey[300]!),
+        foregroundColor: isDarkMode ? Colors.grey[300] : Colors.grey[700],
+        backgroundColor: isDarkMode ? const Color(0xFF333333) : Colors.grey[100],
+        side: BorderSide(color: isDarkMode ? const Color(0xFF555555) : Colors.grey[300]!),
         padding: size == 'small'
             ? const EdgeInsets.symmetric(horizontal: 8, vertical: 4)
             : const EdgeInsets.symmetric(horizontal: 12, vertical: 8),

@@ -9,14 +9,13 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  provider: ^6.0.5
+  shared_preferences: ^2.2.0
   cupertino_icons: ^1.0.2
   yaml: ^3.1.1
   xml: ^6.1.0
   path_provider: ^2.0.11
   file_picker: ^5.2.5
-  shared_preferences: ^2.0.15
-  # 移除 window_size: ^0.4.0
-  # 使用 Flutter 官方的 desktop_window 包
   desktop_window: ^0.4.0
 
 dev_dependencies:

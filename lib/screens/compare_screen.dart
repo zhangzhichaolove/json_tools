@@ -66,8 +66,6 @@ class _CompareScreenState extends State<CompareScreen> {
                   ),
                   Row(
                     children: [
-                      _buildToolButton('导入', Icons.file_download, size: 'small'),
-                      const SizedBox(width: 4),
                       _buildToolButton('清空', Icons.delete_outline, size: 'small'),
                     ],
                   ),
@@ -108,8 +106,6 @@ class _CompareScreenState extends State<CompareScreen> {
                   ),
                   Row(
                     children: [
-                      _buildToolButton('导入', Icons.file_download, size: 'small'),
-                      const SizedBox(width: 4),
                       _buildToolButton('清空', Icons.delete_outline, size: 'small'),
                     ],
                   ),

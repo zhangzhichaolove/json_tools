@@ -1,72 +1,64 @@
 import 'package:flutter/material.dart';
-import '../theme/app_theme.dart';
+import 'package:provider/provider.dart';
+import '../providers/theme_provider.dart';
 
 class JsonEditor extends StatelessWidget {
   final String initialValue;
   final Function(String) onChanged;
-  final String placeholder;
   final bool readOnly;
+  final String placeholder;
 
   const JsonEditor({
     Key? key,
-    this.initialValue = '',
+    required this.initialValue,
     required this.onChanged,
-    this.placeholder = '在此输入JSON',
     this.readOnly = false,
+    this.placeholder = '',
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDarkMode = themeProvider.isDarkMode;
+    final primaryColor = themeProvider.primaryColor;
+
     return Container(
       decoration: BoxDecoration(
-        color: AppTheme.light,
+        color: isDarkMode ? const Color(0xFF2C2C2C) : Colors.white,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(
+          color: isDarkMode ? const Color(0xFF444444) : const Color(0xFFE2E8F0),
+        ),
       ),
-      child: Stack(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(40, 12, 12, 12),
-            child: TextField(
-              controller: TextEditingController(text: initialValue),
-              onChanged: onChanged,
-              maxLines: null,
-              readOnly: readOnly,
-              style: const TextStyle(
-                fontFamily: 'monospace',
-                fontSize: 14,
-              ),
-              decoration: InputDecoration(
-                border: InputBorder.none,
-                hintText: placeholder,
-                hintStyle: TextStyle(
-                  color: Colors.grey[400],
-                  fontFamily: 'monospace',
-                  fontSize: 14,
-                ),
-              ),
+      child: TextField(
+        controller: TextEditingController(text: initialValue),
+        onChanged: onChanged,
+        readOnly: readOnly,
+        maxLines: null,
+        expands: true,
+        style: TextStyle(
+          fontFamily: 'monospace',
+          fontSize: 14,
+          color: isDarkMode ? Colors.white : const Color(0xFF1F2937),
+        ),
+        decoration: InputDecoration(
+          hintText: placeholder,
+          hintStyle: TextStyle(
+            color: isDarkMode ? Colors.grey[500] : Colors.grey[400],
+            fontFamily: 'monospace',
+            fontSize: 14,
+          ),
+          contentPadding: const EdgeInsets.all(16),
+          border: InputBorder.none,
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(
+              color: primaryColor,
+              width: 1.5,
             ),
           ),
-          Positioned(
-            left: 0,
-            top: 0,
-            bottom: 0,
-            width: 30,
-            child: Container(
-              color: Colors.grey[100],
-              padding: const EdgeInsets.only(top: 12, right: 8),
-              alignment: Alignment.topRight,
-              child: Text(
-                '1',
-                style: TextStyle(
-                  color: Colors.grey[400],
-                  fontSize: 12,
-                  fontFamily: 'monospace',
-                ),
-              ),
-            ),
-          ),
-        ],
+          enabledBorder: InputBorder.none,
+        ),
       ),
     );
   }

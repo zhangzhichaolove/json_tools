@@ -64,8 +64,6 @@ class _ConvertScreenState extends State<ConvertScreen> {
             ),
             Row(
               children: [
-                _buildToolButton('导入文件', Icons.file_download),
-                const SizedBox(width: 8),
                 _buildToolButton('清空', Icons.delete_outline),
               ],
             ),
