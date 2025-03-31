@@ -4,11 +4,19 @@ import '../theme/app_theme.dart';
 class TopBar extends StatelessWidget {
   final String title;
   final VoidCallback? onMenuPressed;
+  final bool showHelpIcon;
+  final bool showNotificationIcon;
+  final VoidCallback? onHelpPressed;
+  final VoidCallback? onNotificationPressed;
 
   const TopBar({
     Key? key,
     required this.title,
     this.onMenuPressed,
+    this.showHelpIcon = true,
+    this.showNotificationIcon = true,
+    this.onHelpPressed,
+    this.onNotificationPressed,
   }) : super(key: key);
 
   @override
@@ -42,16 +50,20 @@ class TopBar extends StatelessWidget {
             ),
           ),
           const Spacer(),
-          IconButton(
-            icon: const Icon(Icons.help_outline),
-            onPressed: () {},
-            color: Colors.grey[600],
-          ),
-          IconButton(
-            icon: const Icon(Icons.notifications_none),
-            onPressed: () {},
-            color: Colors.grey[600],
-          ),
+          // 根据参数控制是否显示帮助图标
+          if (showHelpIcon)
+            IconButton(
+              icon: const Icon(Icons.help_outline),
+              onPressed: onHelpPressed ?? () {},
+              color: Colors.grey[600],
+            ),
+          // 根据参数控制是否显示通知图标
+          if (showNotificationIcon)
+            IconButton(
+              icon: const Icon(Icons.notifications_none),
+              onPressed: onNotificationPressed ?? () {},
+              color: Colors.grey[600],
+            ),
         ],
       ),
     );

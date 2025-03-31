@@ -12,6 +12,8 @@ class HomeScreen extends StatelessWidget {
         TopBar(
           title: '欢迎使用',
           onMenuPressed: () {},
+          showHelpIcon: false,  // 不显示帮助图标
+          showNotificationIcon: false,  // 不显示通知图标
         ),
         Expanded(
           child: SingleChildScrollView(
@@ -49,7 +51,7 @@ class HomeScreen extends StatelessWidget {
             color: AppTheme.primary.withOpacity(0.1),
           ),
           // 添加一个图标代替网络图片
-          child: Icon(
+          child: const Icon(
             Icons.data_object,
             size: 64,
             color: AppTheme.primary,
@@ -174,55 +176,6 @@ class HomeScreen extends StatelessWidget {
           ),
         );
       },
-    );
-  }
-
-  Widget _buildRecentFileItem(String name, String info) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey[200]!),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            Icons.insert_drive_file_outlined,
-            color: Colors.grey[400],
-            size: 20,
-          ),
-          const SizedBox(width: 12),
-          Expanded(  // Wrap Column with Expanded to prevent overflow
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,  // Use minimum vertical space
-              children: [
-                Text(
-                  name,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: Color(0xFF1F2937),
-                  ),
-                ),
-                Text(
-                  info,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[500],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Icon(
-            Icons.visibility_outlined,
-            color: Colors.grey[400],
-            size: 20,
-          ),
-        ],
-      ),
     );
   }
 }
