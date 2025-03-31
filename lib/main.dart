@@ -18,7 +18,7 @@ void main() async {
 
   // 设置窗口大小（仅适用于桌面平台）
   if (Platform.isMacOS || Platform.isWindows || Platform.isLinux) {
-    await DesktopWindow.setWindowSize(const Size(1024, 768));
+    await DesktopWindow.setWindowSize(const Size(1400, 1000));
     await DesktopWindow.setMinWindowSize(const Size(800, 600));
   }
 
