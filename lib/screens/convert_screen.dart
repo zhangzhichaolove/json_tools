@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/top_bar.dart';
 import '../widgets/json_editor.dart';
@@ -19,6 +22,44 @@ class _ConvertScreenState extends State<ConvertScreen> {
   String targetFormat = 'YAML';
   
   final List<String> formats = ['JSON', 'YAML', 'XML', 'CSV', 'URL 参数'];
+
+  // 添加示例数据
+  final Map<String, String> exampleData = {
+    'JSON': '''{
+  "name": "JSON工具箱",
+  "version": "1.0",
+  "features": ["格式化", "转换", "验证"],
+  "settings": {
+    "theme": "auto",
+    "language": "zh-CN"
+  }
+}''',
+    'YAML': '''name: JSON工具箱
+version: 1.0
+features:
+  - 格式化
+  - 转换
+  - 验证
+settings:
+  theme: auto
+  language: zh-CN''',
+    'XML': '''<root>
+  <name>JSON工具箱</name>
+  <version>1.0</version>
+  <features>
+    <item>格式化</item>
+    <item>转换</item>
+    <item>验证</item>
+  </features>
+  <settings>
+    <theme>auto</theme>
+    <language>zh-CN</language>
+  </settings>
+</root>''',
+    'CSV': '''name,version,feature1,feature2,feature3
+JSON工具箱,1.0,格式化,转换,验证''',
+    'URL 参数': '''name=JSON工具箱&version=1.0&features[]=格式化&features[]=转换&features[]=验证&settings[theme]=auto&settings[language]=zh-CN'''
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -64,7 +105,30 @@ class _ConvertScreenState extends State<ConvertScreen> {
             ),
             Row(
               children: [
-                _buildToolButton('清空', Icons.delete_outline),
+                _buildToolButton('示例', Icons.search, onPressed: () {
+                  setState(() {
+                    inputData = exampleData[sourceFormat] ?? '';
+                  });
+                }),
+                const SizedBox(width: 8),
+                _buildToolButton('粘贴', Icons.content_paste, onPressed: () async {
+                  final clipboardData = await Clipboard.getData(Clipboard.kTextPlain);
+                  if (clipboardData != null && clipboardData.text != null) {
+                    setState(() {
+                      inputData = clipboardData.text!;
+                    });
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('剪贴板中没有文本内容')),
+                    );
+                  }
+                }),
+                const SizedBox(width: 8),
+                _buildToolButton('清空', Icons.delete_outline, onPressed: () {
+                  setState(() {
+                    inputData = '';
+                  });
+                }),
               ],
             ),
           ],
@@ -213,12 +277,43 @@ class _ConvertScreenState extends State<ConvertScreen> {
         label: const Text('转换'),
         onPressed: () {
           setState(() {
-            if (sourceFormat == 'JSON' && targetFormat == 'YAML') {
-              outputData = JsonUtils.jsonToYaml(inputData);
-            } else if (sourceFormat == 'YAML' && targetFormat == 'JSON') {
-              outputData = JsonUtils.yamlToJson(inputData);
-            } else {
-              outputData = '暂不支持从 $sourceFormat 转换到 $targetFormat';
+            try {
+              if (inputData.trim().isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('请输入需要转换的数据')),
+                );
+                return;
+              }
+              
+              if (sourceFormat == targetFormat) {
+                outputData = inputData;
+                return;
+              }
+              
+              if (sourceFormat == 'JSON' && targetFormat == 'YAML') {
+                outputData = JsonUtils.jsonToYaml(inputData);
+              } else if (sourceFormat == 'YAML' && targetFormat == 'JSON') {
+                outputData = JsonUtils.yamlToJson(inputData);
+              } else if (sourceFormat == 'JSON' && targetFormat == 'XML') {
+                outputData = JsonUtils.jsonToXml(inputData);
+              } else if (sourceFormat == 'XML' && targetFormat == 'JSON') {
+                outputData = JsonUtils.xmlToJson(inputData);
+              } else if (sourceFormat == 'JSON' && targetFormat == 'CSV') {
+                outputData = JsonUtils.jsonToCsv(inputData);
+              } else if (sourceFormat == 'CSV' && targetFormat == 'JSON') {
+                outputData = JsonUtils.csvToJson(inputData);
+              } else if (sourceFormat == 'JSON' && targetFormat == 'URL 参数') {
+                outputData = JsonUtils.jsonToUrlParams(inputData);
+              } else if (sourceFormat == 'URL 参数' && targetFormat == 'JSON') {
+                outputData = JsonUtils.urlParamsToJson(inputData);
+              } else {
+                outputData = '暂不支持从 $sourceFormat 转换到 $targetFormat';
+              }
+            } catch (e) {
+              outputData = '转换失败: ${e.toString()}';
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('转换失败: ${e.toString()}')),
+              );
             }
           });
         },
@@ -248,13 +343,27 @@ class _ConvertScreenState extends State<ConvertScreen> {
             Row(
               children: [
                 _buildToolButton('复制', Icons.content_copy, onPressed: () {
-                  Clipboard.setData(ClipboardData(text: outputData));
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('已复制到剪贴板')),
-                  );
+                  if (outputData.isNotEmpty) {
+                    Clipboard.setData(ClipboardData(text: outputData));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('已复制到剪贴板')),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('没有可复制的内容')),
+                    );
+                  }
                 }),
                 const SizedBox(width: 8),
-                _buildToolButton('下载', Icons.file_download),
+                _buildToolButton('下载', Icons.file_download, onPressed: () {
+                  if (outputData.isNotEmpty) {
+                    _downloadOutput();
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('没有可下载的内容')),
+                    );
+                  }
+                }),
               ],
             ),
           ],
@@ -275,6 +384,45 @@ class _ConvertScreenState extends State<ConvertScreen> {
         ),
       ],
     );
+  }
+
+  // 添加下载功能
+  Future<void> _downloadOutput() async {
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      String fileName;
+      
+      switch (targetFormat) {
+        case 'JSON':
+          fileName = 'converted_data.json';
+          break;
+        case 'YAML':
+          fileName = 'converted_data.yaml';
+          break;
+        case 'XML':
+          fileName = 'converted_data.xml';
+          break;
+        case 'CSV':
+          fileName = 'converted_data.csv';
+          break;
+        case 'URL 参数':
+          fileName = 'converted_data.txt';
+          break;
+        default:
+          fileName = 'converted_data.txt';
+      }
+      
+      final file = File('${directory.path}/$fileName');
+      await file.writeAsString(outputData);
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('文件已保存到: ${file.path}')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('保存文件失败: ${e.toString()}')),
+      );
+    }
   }
 
   Widget _buildToolButton(String label, IconData icon, {VoidCallback? onPressed}) {

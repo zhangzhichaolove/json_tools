@@ -6,6 +6,7 @@ import '../widgets/top_bar.dart';
 import '../widgets/json_editor.dart';
 import 'package:provider/provider.dart';
 import '../providers/theme_provider.dart';
+import '../utils/json_utils.dart';
 
 class VisualizeScreen extends StatefulWidget {
   const VisualizeScreen({Key? key}) : super(key: key);
@@ -19,6 +20,9 @@ class _VisualizeScreenState extends State<VisualizeScreen> {
   dynamic parsedJson;
   bool isValidJson = false;
   String errorMessage = '';
+  // 添加一个Map来跟踪每个节点的展开状态
+  final Map<String, bool> _expandedNodes = {};
+  bool _expandAll = false;
 
   @override
   Widget build(BuildContext context) {
@@ -78,7 +82,33 @@ class _VisualizeScreenState extends State<VisualizeScreen> {
               ),
               Row(
                 children: [
-                  _buildToolButton('清空', Icons.delete_outline, size: 'small', isDarkMode: isDarkMode),
+                  _buildToolButton('清空', Icons.delete_outline, size: 'small', isDarkMode: isDarkMode, 
+                    onPressed: () {
+                      setState(() {
+                        inputJson = '';
+                        parsedJson = null;
+                        isValidJson = false;
+                        errorMessage = '';
+                        _expandedNodes.clear();
+                      });
+                    }
+                  ),
+                  const SizedBox(width: 4),
+                  _buildToolButton('格式化', Icons.format_align_left, size: 'small', isDarkMode: isDarkMode,
+                    onPressed: () {
+                      if (inputJson.trim().isNotEmpty) {
+                        try {
+                          final formatted = JsonUtils.formatJson(inputJson);
+                          setState(() {
+                            inputJson = formatted;
+                            _parseJson();
+                          });
+                        } catch (e) {
+                          // 格式化失败，保持原样
+                        }
+                      }
+                    }
+                  ),
                   const SizedBox(width: 4),
                   Center(
                     child: ElevatedButton.icon(
@@ -104,7 +134,6 @@ class _VisualizeScreenState extends State<VisualizeScreen> {
               onChanged: (value) {
                 setState(() {
                   inputJson = value;
-                  _parseJson();
                 });
               },
               placeholder: '在此输入JSON数据',
@@ -163,7 +192,38 @@ class _VisualizeScreenState extends State<VisualizeScreen> {
                 ),
               ),
               if (isValidJson)
-                _buildToolButton('展开全部', Icons.unfold_more, size: 'small', isDarkMode: isDarkMode),
+                Row(
+                  children: [
+                    _buildToolButton('展开全部', Icons.unfold_more, size: 'small', isDarkMode: isDarkMode,
+                      onPressed: () {
+                        setState(() {
+                          _expandAll = true;
+                          _expandedNodes.clear();
+                        });
+                      }
+                    ),
+                    const SizedBox(width: 4),
+                    _buildToolButton('折叠全部', Icons.unfold_less, size: 'small', isDarkMode: isDarkMode,
+                      onPressed: () {
+                        setState(() {
+                          _expandAll = false;
+                          _expandedNodes.clear();
+                        });
+                      }
+                    ),
+                    const SizedBox(width: 4),
+                    _buildToolButton('复制', Icons.copy, size: 'small', isDarkMode: isDarkMode,
+                      onPressed: () {
+                        if (isValidJson) {
+                          Clipboard.setData(ClipboardData(text: JsonUtils.formatJson(inputJson)));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('已复制到剪贴板')),
+                          );
+                        }
+                      }
+                    ),
+                  ],
+                ),
             ],
           ),
           const SizedBox(height: 8),
@@ -179,7 +239,7 @@ class _VisualizeScreenState extends State<VisualizeScreen> {
               padding: const EdgeInsets.all(16),
               child: isValidJson
                   ? SingleChildScrollView(
-                      child: _buildJsonTree(parsedJson, 0, isDarkMode),
+                      child: _buildJsonTree(parsedJson, 0, isDarkMode, path: 'root'),
                     )
                   : Center(
                       child: Text(
@@ -197,7 +257,19 @@ class _VisualizeScreenState extends State<VisualizeScreen> {
     );
   }
 
-  Widget _buildJsonTree(dynamic json, int depth, bool isDarkMode) {
+  // 获取节点的展开状态
+  bool _isExpanded(String path) {
+    return _expandAll || _expandedNodes[path] == true;
+  }
+
+  // 切换节点的展开状态
+  void _toggleExpanded(String path) {
+    setState(() {
+      _expandedNodes[path] = !_isExpanded(path);
+    });
+  }
+
+  Widget _buildJsonTree(dynamic json, int depth, bool isDarkMode, {required String path}) {
     if (json == null) {
       return Text(
         'null',
@@ -239,113 +311,139 @@ class _VisualizeScreenState extends State<VisualizeScreen> {
     }
 
     if (json is List) {
-      return _buildListNode(json, depth, isDarkMode);
+      return _buildListNode(json, depth, isDarkMode, path: path);
     }
 
     if (json is Map) {
-      return _buildMapNode(json, depth, isDarkMode);
+      return _buildMapNode(json, depth, isDarkMode, path: path);
     }
 
     return Text(json.toString());
   }
 
-  Widget _buildListNode(List list, int depth, bool isDarkMode) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    final primaryColor = themeProvider.primaryColor;
+  Widget _buildListNode(List list, int depth, bool isDarkMode, {required String path}) {
+    final isExpanded = _isExpanded(path);
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Icon(
-              Icons.arrow_drop_down,
-              size: 20,
-              color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
-            ),
-            Text(
-              '数组 [${list.length}]',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: isDarkMode ? Colors.grey[300] : Colors.grey[800],
+        InkWell(
+          onTap: () => _toggleExpanded(path),
+          child: Row(
+            children: [
+              Icon(
+                isExpanded ? Icons.arrow_drop_down : Icons.arrow_right,
+                size: 20,
+                color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
               ),
-            ),
-          ],
-        ),
-        Padding(
-          padding: const EdgeInsets.only(left: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: list.asMap().entries.map((entry) {
-              final index = entry.key;
-              final value = entry.value;
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 2),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '$index: ',
-                      style: TextStyle(
-                        color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
-                        fontFamily: 'monospace',
-                      ),
-                    ),
-                    Expanded(child: _buildJsonTree(value, depth + 1, isDarkMode)),
-                  ],
+              Text(
+                '数组 [${list.length}]',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: isDarkMode ? Colors.grey[300] : Colors.grey[800],
                 ),
-              );
-            }).toList(),
+              ),
+              if (!isExpanded && list.isNotEmpty)
+                Text(
+                  ' [...]',
+                  style: TextStyle(
+                    color: isDarkMode ? Colors.grey[500] : Colors.grey[600],
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+            ],
           ),
         ),
+        if (isExpanded)
+          Padding(
+            padding: const EdgeInsets.only(left: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: list.asMap().entries.map((entry) {
+                final index = entry.key;
+                final value = entry.value;
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '$index: ',
+                        style: TextStyle(
+                          color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                          fontFamily: 'monospace',
+                        ),
+                      ),
+                      Expanded(child: _buildJsonTree(value, depth + 1, isDarkMode, path: '$path[$index]')),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
       ],
     );
   }
 
-  Widget _buildMapNode(Map map, int depth, bool isDarkMode) {
+  Widget _buildMapNode(Map map, int depth, bool isDarkMode, {required String path}) {
+    final isExpanded = _isExpanded(path);
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Icon(
-              Icons.arrow_drop_down,
-              size: 20,
-              color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
-            ),
-            Text(
-              '对象 {${map.length}}',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: isDarkMode ? Colors.grey[300] : Colors.grey[800],
+        InkWell(
+          onTap: () => _toggleExpanded(path),
+          child: Row(
+            children: [
+              Icon(
+                isExpanded ? Icons.arrow_drop_down : Icons.arrow_right,
+                size: 20,
+                color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
               ),
-            ),
-          ],
-        ),
-        Padding(
-          padding: const EdgeInsets.only(left: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: map.entries.map((entry) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 2),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '"${entry.key}": ',
-                      style: TextStyle(
-                        color: isDarkMode ? Colors.red[300] : Colors.red[700],
-                        fontFamily: 'monospace',
-                      ),
-                    ),
-                    Expanded(child: _buildJsonTree(entry.value, depth + 1, isDarkMode)),
-                  ],
+              Text(
+                '对象 {${map.length}}',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: isDarkMode ? Colors.grey[300] : Colors.grey[800],
                 ),
-              );
-            }).toList(),
+              ),
+              if (!isExpanded && map.isNotEmpty)
+                Text(
+                  ' {...}',
+                  style: TextStyle(
+                    color: isDarkMode ? Colors.grey[500] : Colors.grey[600],
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+            ],
           ),
         ),
+        if (isExpanded)
+          Padding(
+            padding: const EdgeInsets.only(left: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: map.entries.map((entry) {
+                final key = entry.key.toString();
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '"$key": ',
+                        style: TextStyle(
+                          color: isDarkMode ? Colors.red[300] : Colors.red[700],
+                          fontFamily: 'monospace',
+                        ),
+                      ),
+                      Expanded(child: _buildJsonTree(entry.value, depth + 1, isDarkMode, path: '$path.$key')),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
       ],
     );
   }

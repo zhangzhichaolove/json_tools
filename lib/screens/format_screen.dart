@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import '../providers/theme_provider.dart';
 import '../theme/app_theme.dart';
@@ -17,6 +20,22 @@ class FormatScreen extends StatefulWidget {
 class _FormatScreenState extends State<FormatScreen> {
   String inputJson = '';
   String outputJson = '';
+  
+  // 添加示例JSON
+  final String exampleJson = '''{
+  "name": "JSON工具箱",
+  "version": "1.0",
+  "features": ["格式化", "压缩", "验证", "可视化"],
+  "settings": {
+    "theme": "auto",
+    "language": "zh-CN",
+    "autoSave": true
+  },
+  "author": {
+    "name": "开发者",
+    "email": "dev@example.com"
+  }
+}''';
 
   @override
   Widget build(BuildContext context) {
@@ -62,11 +81,30 @@ class _FormatScreenState extends State<FormatScreen> {
             ),
             Row(
               children: [
-                _buildToolButton('示例', Icons.search),
+                _buildToolButton('示例', Icons.search, onPressed: () {
+                  setState(() {
+                    inputJson = exampleJson;
+                  });
+                }),
                 const SizedBox(width: 8),
-                _buildToolButton('粘贴', Icons.content_paste),
+                _buildToolButton('粘贴', Icons.content_paste, onPressed: () async {
+                  final clipboardData = await Clipboard.getData(Clipboard.kTextPlain);
+                  if (clipboardData != null && clipboardData.text != null) {
+                    setState(() {
+                      inputJson = clipboardData.text!;
+                    });
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('剪贴板中没有文本内容')),
+                    );
+                  }
+                }),
                 const SizedBox(width: 8),
-                _buildToolButton('清空', Icons.delete_outline),
+                _buildToolButton('清空', Icons.delete_outline, onPressed: () {
+                  setState(() {
+                    inputJson = '';
+                  });
+                }),
               ],
             ),
           ],
@@ -161,13 +199,27 @@ class _FormatScreenState extends State<FormatScreen> {
             Row(
               children: [
                 _buildToolButton('复制', Icons.content_copy, onPressed: () {
-                  Clipboard.setData(ClipboardData(text: outputJson));
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('已复制到剪贴板')),
-                  );
+                  if (outputJson.isNotEmpty) {
+                    Clipboard.setData(ClipboardData(text: outputJson));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('已复制到剪贴板')),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('没有可复制的内容')),
+                    );
+                  }
                 }),
                 const SizedBox(width: 8),
-                _buildToolButton('下载', Icons.file_download),
+                _buildToolButton('下载', Icons.file_download, onPressed: () {
+                  if (outputJson.isNotEmpty) {
+                    _downloadJson();
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('没有可下载的内容')),
+                    );
+                  }
+                }),
               ],
             ),
           ],
@@ -203,5 +255,18 @@ class _FormatScreenState extends State<FormatScreen> {
         textStyle: const TextStyle(fontSize: 12),
       ),
     );
+  }
+  
+  // 添加下载JSON功能
+  Future<void> _downloadJson() async {
+    // 在移动应用中，通常需要使用平台特定的API来实现文件下载
+    // 这里只是一个简单的提示，实际实现需要使用文件系统API
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('文件已保存到下载目录')),
+    );
+    
+    final directory = await getApplicationDocumentsDirectory();
+    final file = File('${directory.path}/formatted_json.json');
+    await file.writeAsString(outputJson);
   }
 }

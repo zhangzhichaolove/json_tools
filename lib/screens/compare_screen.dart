@@ -66,7 +66,12 @@ class _CompareScreenState extends State<CompareScreen> {
                   ),
                   Row(
                     children: [
-                      _buildToolButton('清空', Icons.delete_outline, size: 'small'),
+                      _buildToolButton('清空', Icons.delete_outline, size: 'small', onPressed: () {
+                        setState(() {
+                          leftJson = '';
+                          hasCompared = false;
+                        });
+                      }),
                     ],
                   ),
                 ],
@@ -106,7 +111,12 @@ class _CompareScreenState extends State<CompareScreen> {
                   ),
                   Row(
                     children: [
-                      _buildToolButton('清空', Icons.delete_outline, size: 'small'),
+                      _buildToolButton('清空', Icons.delete_outline, size: 'small', onPressed: () {
+                        setState(() {
+                          rightJson = '';
+                          hasCompared = false;
+                        });
+                      }),
                     ],
                   ),
                 ],
