@@ -15,6 +15,27 @@
   - JSON ↔ CSV
   - JSON ↔ URL 参数
 
+## 项目截图
+
+### 主界面
+![主界面](screenshots/home.png)
+
+### JSON 格式化
+![格式化](screenshots/format.png)
+
+### 格式转换
+![转换](screenshots/convert.png)
+
+### JSON 比较
+![比较](screenshots/compare.png)
+
+### JSON 可视化
+![可视化](screenshots/visualize.png)
+
+### 设置
+![转换](screenshots/setting.png)
+
+
 ## 使用说明
 
 1. 在左侧输入或粘贴 JSON 数据
