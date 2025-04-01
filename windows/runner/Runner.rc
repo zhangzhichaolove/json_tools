@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "peak.chao.json.tools" "\0"
-            VALUE "FileDescription", "json_tools" "\0"
+            VALUE "CompanyName", "com.example" "\0"
+            VALUE "FileDescription", "JSON工具箱" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "json_tools" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2025 peak.chao.json.tools. All rights reserved." "\0"
-            VALUE "OriginalFilename", "json_tools.exe" "\0"
-            VALUE "ProductName", "json_tools" "\0"
+            VALUE "InternalName", "JSON工具箱" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2023 Your Company. All rights reserved." "\0"
+            VALUE "OriginalFilename", "JSON工具箱.exe" "\0"
+            VALUE "ProductName", "JSON工具箱" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

@@ -4,7 +4,10 @@ project(json_tools LANGUAGES CXX)
 
 # The name of the executable created for the application. Change this to change
 # the on-disk name of your application.
-set(BINARY_NAME "json_tools")
+project(runner LANGUAGES CXX)
+
+# 应用名称
+set(BINARY_NAME "JSON工具箱")
 
 # Explicitly opt in to modern CMake behaviors to avoid warnings with recent
 # versions of CMake.
